@@ -139,17 +139,17 @@ view model =
     case model of
         NotRolling faces ->
             div []
-                [ h1 [ color Red ] [ dieToHtml model faces.redFace ]
+                [ h1 [] [ eventToHtml model ]
+                , h1 [ color Red ] [ dieToHtml model faces.redFace ]
                 , h1 [ color Yellow ] [ dieToHtml model faces.yellowFace ]
-                , h1 [] [ eventToHtml model ]
                 , h1 [] [ button [ onClick UserClickedRollButton ] [ text "Roll" ] ]
                 ]
 
         Rolling faces ->
             div []
-                [ h1 [ color Red ] [ dieToHtml model faces.redFace ]
+                [ h1 [] [ eventToHtml model ]
+                , h1 [ color Red ] [ dieToHtml model faces.redFace ]
                 , h1 [ color Yellow ] [ dieToHtml model faces.yellowFace ]
-                , h1 [] [ eventToHtml model ]
                 , h1 [] [ button [] [ text "Rolling" ] ]
                 ]
 
