@@ -1,0 +1,16 @@
+{
+  "name": "catan-dice-roller",
+  "version": "0.0.1",
+  "description": "rolls catan dice (for cities and knights)",
+  "main": "index.js",
+  "author": "Jack Lucky <jack.lucky.iv@gmail.com>",
+  "license": "MIT",
+  "private": true,
+  "devDependencies": {
+    "@fortawesome/fontawesome-free": "^5.9.0",
+    "bulma": "^0.7.5"
+  },
+  "scripts": {
+    "now-build": "NODE_ENV=production elm-app build"
+  }
+}
