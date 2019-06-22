@@ -7,10 +7,17 @@
   "license": "MIT",
   "private": true,
   "devDependencies": {
+    "create-elm-app": "^3.0.4",
+    "elm": "^0.19.0-bugfix6",
+    "elm-format": "^0.8.1",
     "@fortawesome/fontawesome-free": "^5.9.0",
     "bulma": "^0.7.5"
   },
   "scripts": {
-    "now-build": "NODE_ENV=production elm-app build"
+    "start": "elm-app start",
+    "now-dev": "elm-app start",
+    "build": "NODE_ENV=production elm-app build",
+    "now-build": "NODE_ENV=production elm-app build",
+    "test": "elm-format --validate . && elm-test"
   }
 }
