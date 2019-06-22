@@ -2,7 +2,7 @@ module Main exposing (main)
 
 import Browser
 import Html exposing (..)
-import Html.Attributes exposing (class, style)
+import Html.Attributes exposing (class, disabled, style)
 import Html.Events exposing (..)
 import Json.Decode as Decode
 import Random
@@ -142,7 +142,7 @@ view model =
                 [ h1 [] [ eventToHtml model ]
                 , h1 [ color Red ] [ dieToHtml model faces.redFace ]
                 , h1 [ color Yellow ] [ dieToHtml model faces.yellowFace ]
-                , h1 [] [ button [ onClick UserClickedRollButton ] [ text "Roll" ] ]
+                , h1 [] [ button [ class "button is-primary", disabled False, onClick UserClickedRollButton ] [ text "Roll" ] ]
                 ]
 
         Rolling faces ->
@@ -150,7 +150,7 @@ view model =
                 [ h1 [] [ eventToHtml model ]
                 , h1 [ color Red ] [ dieToHtml model faces.redFace ]
                 , h1 [ color Yellow ] [ dieToHtml model faces.yellowFace ]
-                , h1 [] [ button [] [ text "Rolling" ] ]
+                , h1 [] [ button [ class "button is-primary", disabled True ] [ text "Rolling" ] ]
                 ]
 
 
