@@ -26,10 +26,10 @@ img {
   max-width: 200px;
 }
 
-.rotate {
+.die {
   transition: all 0.5s ease-in;
 }
 
-.rotate.rotating {
+.die.rolling {
   transform: rotate(720deg);
 }

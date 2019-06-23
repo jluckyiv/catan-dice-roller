@@ -22,33 +22,46 @@ main =
 
 
 
--- MODEL
-
-
-type alias Model =
-    State
+-- INIT
 
 
 init : () -> ( Model, Cmd Msg )
 init _ =
-    ( NotRolling (Faces One One Barbarian)
-    , Random.generate RuntimeGeneratedNewFaces roll
+    ( Model NotRolling (Faces Barbarian One One)
+    , rollCmd GotNewFaces
     )
 
 
-type alias Faces =
-    { redFace : DieFace
-    , yellowFace : DieFace
-    , eventFace : EventFace
+
+-- MODEL
+
+
+type alias Model =
+    { isRolling : IsRolling
+    , faces : Faces
     }
 
 
-type State
-    = Rolling Faces
-    | NotRolling Faces
+type IsRolling
+    = Rolling
+    | NotRolling
 
 
-type DieFace
+type alias Faces =
+    { eventFace : EventFace
+    , redFace : ProductionFace
+    , yellowFace : ProductionFace
+    }
+
+
+type EventFace
+    = Barbarian
+    | YellowGate
+    | BlueGate
+    | GreenGate
+
+
+type ProductionFace
     = One
     | Two
     | Three
@@ -57,19 +70,9 @@ type DieFace
     | Six
 
 
-type EventFace
-    = Barbarian
-    | YellowCastle
-    | BlueCastle
-    | GreenCastle
-
-
-type Color
-    = Black
-    | Yellow
-    | Green
-    | Blue
-    | Red
+type ProductionDieColor
+    = YellowDie
+    | RedDie
 
 
 
@@ -78,47 +81,49 @@ type Color
 
 type Msg
     = UserClickedRollButton
-    | RuntimeGeneratedNewFaces Faces
-    | CssTransitionEnded
+    | RollingAnimationEnded
+    | GotNewFaces Faces
 
 
-dieRoll : Random.Generator DieFace
-dieRoll =
-    Random.uniform One [ Two, Three, Four, Five, Six ]
+update : Msg -> Model -> ( Model, Cmd Msg )
+update msg model =
+    case msg of
+        UserClickedRollButton ->
+            ( { model | isRolling = Rolling }
+            , Cmd.none
+            )
+
+        RollingAnimationEnded ->
+            ( model
+            , rollCmd GotNewFaces
+            )
+
+        GotNewFaces faces ->
+            ( { model | isRolling = NotRolling, faces = faces }
+            , Cmd.none
+            )
+
+
+rollCmd : (Faces -> msg) -> Cmd msg
+rollCmd toMsg =
+    Random.generate toMsg roll
+
+
+roll : Random.Generator Faces
+roll =
+    Random.map3 Faces eventRoll productionRoll productionRoll
 
 
 eventRoll : Random.Generator EventFace
 eventRoll =
     Random.weighted
         ( 3, Barbarian )
-        [ ( 1, YellowCastle ), ( 1, GreenCastle ), ( 1, BlueCastle ) ]
+        [ ( 1, YellowGate ), ( 1, GreenGate ), ( 1, BlueGate ) ]
 
 
-roll : Random.Generator Faces
-roll =
-    Random.map3 Faces dieRoll dieRoll eventRoll
-
-
-update : Msg -> Model -> ( Model, Cmd Msg )
-update msg model =
-    case ( msg, model ) of
-        ( UserClickedRollButton, NotRolling faces_ ) ->
-            ( Rolling faces_
-            , Cmd.none
-            )
-
-        ( RuntimeGeneratedNewFaces faces, _ ) ->
-            ( NotRolling faces
-            , Cmd.none
-            )
-
-        ( CssTransitionEnded, _ ) ->
-            ( model
-            , Random.generate RuntimeGeneratedNewFaces roll
-            )
-
-        ( _, _ ) ->
-            ( model, Cmd.none )
+productionRoll : Random.Generator ProductionFace
+productionRoll =
+    Random.uniform One [ Two, Three, Four, Five, Six ]
 
 
 
@@ -136,139 +141,166 @@ subscriptions model =
 
 view : Model -> Html Msg
 view model =
-    case model of
-        NotRolling faces ->
-            div []
-                [ h1 [] [ eventToHtml model ]
-                , h1 [ color Red ] [ dieToHtml model faces.redFace ]
-                , h1 [ color Yellow ] [ dieToHtml model faces.yellowFace ]
-                , h1 [] [ button [ class "button is-primary", disabled False, onClick UserClickedRollButton ] [ text "Roll" ] ]
-                ]
-
-        Rolling faces ->
-            div []
-                [ h1 [] [ eventToHtml model ]
-                , h1 [ color Red ] [ dieToHtml model faces.redFace ]
-                , h1 [ color Yellow ] [ dieToHtml model faces.yellowFace ]
-                , h1 [] [ button [ class "button is-primary", disabled True ] [ text "Rolling" ] ]
-                ]
+    div []
+        [ h1 [] [ viewEventFace model ]
+        , h1 [] [ viewProductionFace RedDie model ]
+        , h1 [] [ viewProductionFace YellowDie model ]
+        , h1 [] [ viewRollButton model ]
+        ]
 
 
-eventToHtml : State -> Html Msg
-eventToHtml state =
+viewEventFace : Model -> Html Msg
+viewEventFace { isRolling, faces } =
     let
-        class_ eventFace =
-            case eventFace of
-                Barbarian ->
-                    barbarianClass
+        transitionAttributes =
+            case isRolling of
+                Rolling ->
+                    [ on "transitionend" (Decode.succeed RollingAnimationEnded)
+                    ]
 
-                _ ->
-                    fortClass
-
-        color_ eventFace =
-            case eventFace of
-                Barbarian ->
-                    Black
-
-                YellowCastle ->
-                    Yellow
-
-                BlueCastle ->
-                    Blue
-
-                GreenCastle ->
-                    Green
+                NotRolling ->
+                    []
     in
-    case state of
-        Rolling faces ->
-            i
-                [ class sizeClass
-                , class (class_ faces.eventFace)
-                , color (color_ faces.eventFace)
-                , class "rotate rotating"
-                , on "transitionend" (Decode.succeed CssTransitionEnded)
-                ]
-                []
-
-        NotRolling faces ->
-            i
-                [ class sizeClass
-                , class (class_ faces.eventFace)
-                , color (color_ faces.eventFace)
-                ]
-                []
+    viewFace isRolling
+        (transitionAttributes
+            ++ [ eventColorAttribute faces.eventFace
+               , eventIconAttribute faces.eventFace
+               ]
+        )
 
 
-dieToHtml : State -> DieFace -> Html msg
-dieToHtml state face =
-    case state of
-        Rolling _ ->
-            i [ class (diceClass face), class sizeClass, class "rotate rotating" ] []
-
-        NotRolling _ ->
-            i [ class (diceClass face), class sizeClass ] []
-
-
-fortClass : String
-fortClass =
-    "fab fa-fort-awesome"
-
-
-sizeClass : String
-sizeClass =
-    "fa-5x"
-
-
-barbarianClass : String
-barbarianClass =
-    "fas fa-skull-crossbones"
-
-
-diceClass : DieFace -> String
-diceClass face =
+viewProductionFace : ProductionDieColor -> Model -> Html msg
+viewProductionFace dieColor { isRolling, faces } =
     let
-        suffix =
-            case face of
-                One ->
-                    "one"
+        face =
+            case dieColor of
+                YellowDie ->
+                    faces.yellowFace
 
-                Two ->
-                    "two"
-
-                Three ->
-                    "three"
-
-                Four ->
-                    "four"
-
-                Five ->
-                    "five"
-
-                Six ->
-                    "six"
+                RedDie ->
+                    faces.redFace
     in
-    "fas fa-dice-" ++ suffix
+    viewFace isRolling
+        [ productionColorAttribute dieColor
+        , productionIconAttribute face
+        ]
 
 
-color : Color -> Html.Attribute msg
-color color_ =
-    style "color" (colorToString color_)
+viewFace : IsRolling -> List (Html.Attribute msg) -> Html msg
+viewFace isRolling otherAttributes =
+    i (otherAttributes ++ [ sizeAttribute, rollingAttribute isRolling ])
+        []
 
 
-colorToString : Color -> String
-colorToString color_ =
+viewRollButton : Model -> Html Msg
+viewRollButton { isRolling } =
+    button (rollButtonAttributes isRolling ++ [ class "button is-primary" ])
+        [ text (rollButtonText isRolling) ]
+
+
+rollButtonAttributes : IsRolling -> List (Html.Attribute Msg)
+rollButtonAttributes isRolling =
+    case isRolling of
+        Rolling ->
+            [ disabled True ]
+
+        NotRolling ->
+            [ disabled False, onClick UserClickedRollButton ]
+
+
+rollButtonText : IsRolling -> String
+rollButtonText isRolling =
+    case isRolling of
+        Rolling ->
+            "Rolling"
+
+        NotRolling ->
+            "Roll"
+
+
+sizeAttribute : Html.Attribute msg
+sizeAttribute =
+    class "fa-5x"
+
+
+rollingAttribute : IsRolling -> Html.Attribute msg
+rollingAttribute isRolling =
+    case isRolling of
+        Rolling ->
+            class "die rolling"
+
+        NotRolling ->
+            class ""
+
+
+eventColorAttribute : EventFace -> Html.Attribute msg
+eventColorAttribute eventFace =
+    case eventFace of
+        Barbarian ->
+            class "has-text-black"
+
+        YellowGate ->
+            class "has-text-warning"
+
+        BlueGate ->
+            class "has-text-info"
+
+        GreenGate ->
+            class "has-text-success"
+
+
+eventIconAttribute : EventFace -> Html.Attribute msg
+eventIconAttribute eventFace =
+    let
+        fort =
+            "fab fa-fort-awesome"
+    in
+    case eventFace of
+        Barbarian ->
+            class "fas fa-skull-crossbones"
+
+        YellowGate ->
+            class fort
+
+        BlueGate ->
+            class fort
+
+        GreenGate ->
+            class fort
+
+
+productionColorAttribute : ProductionDieColor -> Html.Attribute msg
+productionColorAttribute color_ =
     case color_ of
-        Black ->
-            "black"
+        YellowDie ->
+            class "has-text-warning"
 
-        Yellow ->
-            "goldenrod"
+        RedDie ->
+            class "has-text-danger"
 
-        Green ->
-            "green"
 
-        Blue ->
-            "blue"
+productionIconAttribute : ProductionFace -> Html.Attribute msg
+productionIconAttribute face =
+    class ("fas fa-dice-" ++ productionToString face)
 
-        Red ->
-            "indianred"
+
+productionToString : ProductionFace -> String
+productionToString face =
+    case face of
+        One ->
+            "one"
+
+        Two ->
+            "two"
+
+        Three ->
+            "three"
+
+        Four ->
+            "four"
+
+        Five ->
+            "five"
+
+        Six ->
+            "six"
