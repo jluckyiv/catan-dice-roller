@@ -146,10 +146,10 @@ view model =
             [ div [ class "tile is-ancestor is-vertical" ]
                 [ div [ class "tile" ]
                     [ div [ class "tile is-parent is-vertical" ]
-                        [ h1 [ class "tile is-child" ] [ viewEventFace model ]
-                        , h1 [ class "tile is-child" ] [ viewProductionFace RedDie model ]
-                        , h1 [ class "tile is-child" ] [ viewProductionFace YellowDie model ]
-                        , h1 [ class "tile is-child" ] [ viewRollButton model ]
+                        [ div [ class "tile is-child" ] [ viewEventFace model ]
+                        , div [ class "tile is-child" ] [ viewProductionFace RedDie model ]
+                        , div [ class "tile is-child" ] [ viewProductionFace YellowDie model ]
+                        , div [ class "tile is-child" ] [ viewRollButton model ]
                         ]
                     ]
                 ]
@@ -202,7 +202,7 @@ viewFace isRolling otherAttributes =
 
 viewRollButton : Model -> Html Msg
 viewRollButton { isRolling } =
-    button (rollButtonAttributes isRolling ++ [ class "button is-large is-primary" ])
+    button (rollButtonAttributes isRolling ++ [ class "button is-medium is-primary" ])
         [ text (rollButtonText isRolling) ]
 
 
