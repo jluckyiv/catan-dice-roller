@@ -202,7 +202,7 @@ viewFace isRolling otherAttributes =
 
 viewRollButton : Model -> Html Msg
 viewRollButton { isRolling } =
-    button (rollButtonAttributes isRolling ++ [ class "button is-primary" ])
+    button (rollButtonAttributes isRolling ++ [ class "button is-large is-primary" ])
         [ text (rollButtonText isRolling) ]
 
 
