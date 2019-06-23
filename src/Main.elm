@@ -141,11 +141,19 @@ subscriptions model =
 
 view : Model -> Html Msg
 view model =
-    div []
-        [ h1 [] [ viewEventFace model ]
-        , h1 [] [ viewProductionFace RedDie model ]
-        , h1 [] [ viewProductionFace YellowDie model ]
-        , h1 [] [ viewRollButton model ]
+    div [ class "section" ]
+        [ div [ class "container" ]
+            [ div [ class "tile is-ancestor is-vertical" ]
+                [ div [ class "tile" ]
+                    [ div [ class "tile is-parent is-vertical" ]
+                        [ h1 [ class "tile is-child" ] [ viewEventFace model ]
+                        , h1 [ class "tile is-child" ] [ viewProductionFace RedDie model ]
+                        , h1 [ class "tile is-child" ] [ viewProductionFace YellowDie model ]
+                        , h1 [ class "tile is-child" ] [ viewRollButton model ]
+                        ]
+                    ]
+                ]
+            ]
         ]
 
 
