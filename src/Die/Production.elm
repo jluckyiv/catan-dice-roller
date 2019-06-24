@@ -1,34 +1,8 @@
-module Die.Production exposing
-    ( Color(..)
-    , Die
-    , Msg
-    , init
-    , roll
-    , update
-    , view
-    )
+module Die.Production exposing (Color(..), attributes)
 
-import Html exposing (Html, i)
+import Die
+import Html
 import Html.Attributes exposing (class)
-import Html.Events exposing (on)
-import Json.Decode as Decode
-import Random
-
-
-
--- model
-
-
-type alias Die =
-    { color : Color
-    , face : Face
-    , state : State
-    }
-
-
-init : Color -> Die
-init color_ =
-    Die color_ One NotRolling
 
 
 type Color
@@ -36,170 +10,40 @@ type Color
     | Yellow
 
 
-type Face
-    = One
-    | Two
-    | Three
-    | Four
-    | Five
-    | Six
-
-
-type State
-    = Rolling
-    | NotRolling
-
-
-roll : Die -> Die
-roll die =
-    { die | state = Rolling }
-
-
-
--- MSG
-
-
-type Msg
-    = UserStartedRoll
-    | RollAnimationEnded
-    | GotNewFace Face
-
-
-
--- UPDATE
-
-
-update : Msg -> Die -> ( Die, Cmd Msg )
-update msg die =
-    case msg of
-        UserStartedRoll ->
-            ( { die | state = Rolling }
-            , Cmd.none
-            )
-
-        RollAnimationEnded ->
-            ( { die | state = NotRolling }
-            , getNewFace
-            )
-
-        GotNewFace face ->
-            ( { die | face = face }
-            , Cmd.none
-            )
-
-
-getNewFace : Cmd Msg
-getNewFace =
-    Random.generate GotNewFace
-        (Random.uniform One [ Two, Three, Four, Five, Six ])
-
-
-view : Die -> Html Msg
-view die =
+attributes : Color -> Die.Model -> List (Html.Attribute msg)
+attributes color die =
     let
-        transitionAttributes =
-            case die.state of
-                Rolling ->
-                    [ on "transitionend" (Decode.succeed RollAnimationEnded)
-                    ]
+        colorAttribute =
+            case color of
+                Red ->
+                    class "has-text-danger"
 
-                NotRolling ->
-                    []
+                Yellow ->
+                    class "has-text-warning"
     in
-    i
-        (transitionAttributes
-            ++ [ sizeAttribute die
-               , colorAttribute die
-               , iconAttribute die
-               , rollingAttribute die
-               ]
-        )
-        []
+    colorAttribute :: [ class "fa-5x", iconAttributeForFace die.face ]
 
 
-sizeAttribute : Die -> Html.Attribute msg
-sizeAttribute _ =
-    class "fa-5x"
+iconAttributeForFace : Die.Face -> Html.Attribute msg
+iconAttributeForFace face =
+    case face of
+        Die.Face 1 ->
+            class "fas fa-dice-one"
 
+        Die.Face 2 ->
+            class "fas fa-dice-two"
 
-rollingAttribute : Die -> Html.Attribute msg
-rollingAttribute { state } =
-    case state of
-        Rolling ->
-            class "die rolling"
+        Die.Face 3 ->
+            class "fas fa-dice-three"
 
-        NotRolling ->
+        Die.Face 4 ->
+            class "fas fa-dice-four"
+
+        Die.Face 5 ->
+            class "fas fa-dice-five"
+
+        Die.Face 6 ->
+            class "fas fa-dice-six"
+
+        _ ->
             class ""
-
-
-colorAttribute : Die -> Html.Attribute msg
-colorAttribute die =
-    case die.color of
-        Yellow ->
-            class "has-text-warning"
-
-        Red ->
-            class "has-text-danger"
-
-
-iconAttribute : Die -> Html.Attribute msg
-iconAttribute die =
-    class ("fas fa-dice-" ++ toString die)
-
-
-
--- CONVERSION
-
-
-color : Die -> String
-color die =
-    case die.color of
-        Red ->
-            "red"
-
-        Yellow ->
-            "yellow"
-
-
-toInt : Die -> Int
-toInt die =
-    case die.face of
-        One ->
-            1
-
-        Two ->
-            2
-
-        Three ->
-            3
-
-        Four ->
-            4
-
-        Five ->
-            5
-
-        Six ->
-            6
-
-
-toString : Die -> String
-toString die =
-    case die.face of
-        One ->
-            "one"
-
-        Two ->
-            "two"
-
-        Three ->
-            "three"
-
-        Four ->
-            "four"
-
-        Five ->
-            "five"
-
-        Six ->
-            "six"

@@ -1,6 +1,7 @@
 module Main exposing (main)
 
 import Browser
+import Die as Die
 import Die.Event as EventDie
 import Die.Production as ProductionDie
 import Html exposing (..)
@@ -28,17 +29,17 @@ main =
 
 
 type alias Model =
-    { eventDie : EventDie.Die
-    , redDie : ProductionDie.Die
-    , yellowDie : ProductionDie.Die
+    { eventDie : Die.Model
+    , redDie : Die.Model
+    , yellowDie : Die.Model
     }
 
 
 init : () -> ( Model, Cmd Msg )
 init _ =
-    ( { eventDie = EventDie.init
-      , redDie = ProductionDie.init ProductionDie.Red
-      , yellowDie = ProductionDie.init ProductionDie.Yellow
+    ( { eventDie = Die.init 6
+      , redDie = Die.init 6
+      , yellowDie = Die.init 6
       }
     , Cmd.none {- rollCmd GotNewFaces -}
     )
@@ -50,9 +51,9 @@ init _ =
 
 type Msg
     = UserClickedRollButton
-    | EventDieMsg EventDie.Msg
-    | RedDieMsg ProductionDie.Msg
-    | YellowDieMsg ProductionDie.Msg
+    | GotEventDieMsg Die.Msg
+    | GotRedDieMsg Die.Msg
+    | GotYellowDieMsg Die.Msg
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -63,40 +64,40 @@ update msg model =
             , Cmd.none
             )
 
-        EventDieMsg eventMsg ->
+        GotEventDieMsg dieMsg ->
             let
-                ( updatedDie, eventCmd ) =
-                    EventDie.update eventMsg model.eventDie
+                ( newDie, newCmd ) =
+                    Die.update dieMsg model.eventDie
             in
-            ( { model | eventDie = updatedDie }
-            , Cmd.map EventDieMsg eventCmd
+            ( { model | eventDie = newDie }
+            , Cmd.map GotEventDieMsg newCmd
             )
 
-        RedDieMsg productionMsg ->
+        GotRedDieMsg dieMsg ->
             let
-                ( updatedDie, productionCmd ) =
-                    ProductionDie.update productionMsg model.redDie
+                ( newDie, newCmd ) =
+                    Die.update dieMsg model.redDie
             in
-            ( { model | redDie = updatedDie }
-            , Cmd.map RedDieMsg productionCmd
+            ( { model | redDie = newDie }
+            , Cmd.map GotRedDieMsg newCmd
             )
 
-        YellowDieMsg productionMsg ->
+        GotYellowDieMsg dieMsg ->
             let
-                ( updatedDie, productionCmd ) =
-                    ProductionDie.update productionMsg model.yellowDie
+                ( newDie, newCmd ) =
+                    Die.update dieMsg model.yellowDie
             in
-            ( { model | yellowDie = updatedDie }
-            , Cmd.map YellowDieMsg productionCmd
+            ( { model | yellowDie = newDie }
+            , Cmd.map GotYellowDieMsg newCmd
             )
 
 
 startRolling : Model -> Model
 startRolling model =
     { model
-        | eventDie = EventDie.roll model.eventDie
-        , redDie = ProductionDie.roll model.redDie
-        , yellowDie = ProductionDie.roll model.yellowDie
+        | eventDie = Die.roll model.eventDie
+        , redDie = Die.roll model.redDie
+        , yellowDie = Die.roll model.yellowDie
     }
 
 
@@ -120,9 +121,9 @@ view model =
             [ div [ class "tile is-ancestor is-vertical" ]
                 [ div [ class "tile" ]
                     [ div [ class "tile is-parent is-vertical" ]
-                        [ div [ class "tile is-child" ] [ Html.map EventDieMsg (EventDie.view model.eventDie) ]
-                        , div [ class "tile is-child" ] [ Html.map RedDieMsg (ProductionDie.view model.redDie) ]
-                        , div [ class "tile is-child" ] [ Html.map YellowDieMsg (ProductionDie.view model.yellowDie) ]
+                        [ div [ class "tile is-child" ] [ Html.map GotEventDieMsg (Die.view EventDie.attributes model.eventDie) ]
+                        , div [ class "tile is-child" ] [ Html.map GotRedDieMsg (Die.view (ProductionDie.attributes ProductionDie.Red) model.redDie) ]
+                        , div [ class "tile is-child" ] [ Html.map GotYellowDieMsg (Die.view (ProductionDie.attributes ProductionDie.Yellow) model.yellowDie) ]
                         , div [ class "tile is-child" ] [ viewRollButton model ]
                         ]
                     ]
@@ -135,7 +136,7 @@ viewRollButton : Model -> Html Msg
 viewRollButton model =
     let
         isRolling =
-            EventDie.isRolling model.eventDie
+            Die.isRolling model.eventDie
     in
     button (rollButtonAttributes isRolling ++ [ class "button is-medium is-primary" ])
         [ text (rollButtonText isRolling) ]
