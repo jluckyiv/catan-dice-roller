@@ -105,7 +105,11 @@ startRolling model =
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
-    Sub.none
+    Sub.batch
+        [ Sub.map GotEventDieMsg (Die.subscriptions model.eventDie)
+        , Sub.map GotRedDieMsg (Die.subscriptions model.redDie)
+        , Sub.map GotYellowDieMsg (Die.subscriptions model.yellowDie)
+        ]
 
 
 

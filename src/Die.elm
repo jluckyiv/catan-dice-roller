@@ -5,6 +5,7 @@ module Die exposing
     , init
     , isRolling
     , roll
+    , subscriptions
     , update
     , view
     )
@@ -14,6 +15,7 @@ import Html.Attributes exposing (class)
 import Html.Events exposing (on)
 import Json.Decode as Decode
 import Random
+import Time
 
 
 
@@ -64,6 +66,7 @@ type Msg
     = StartedRoll
     | EndedRollAnimation
     | GotNewFace Int
+    | Ticked Time.Posix
 
 
 
@@ -74,19 +77,21 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         StartedRoll ->
-            ( { model | state = Rolling }
-            , Cmd.none
-            )
+            ( { model | state = Rolling }, Cmd.none )
 
         EndedRollAnimation ->
-            ( { model | state = NotRolling }
-            , Random.generate GotNewFace (Random.int 1 model.faces)
-            )
+            ( { model | state = NotRolling }, Cmd.none )
 
         GotNewFace face ->
-            ( { model | face = Face face }
-            , Cmd.none
-            )
+            ( { model | face = Face face }, Cmd.none )
+
+        Ticked _ ->
+            ( model, getNewFace model )
+
+
+getNewFace : Model -> Cmd Msg
+getNewFace model =
+    Random.generate GotNewFace (Random.int 1 model.faces)
 
 
 view : List (Html.Attribute Msg) -> Model -> Html Msg
@@ -103,3 +108,13 @@ view attributes model =
                     []
     in
     i (transitionAttributes ++ attributes) []
+
+
+subscriptions : Model -> Sub Msg
+subscriptions model =
+    case model.state of
+        Rolling ->
+            Time.every 250 Ticked
+
+        NotRolling ->
+            Sub.none
