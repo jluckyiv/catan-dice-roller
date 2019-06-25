@@ -162,7 +162,8 @@ viewEventDie : Die.Model -> Html Msg
 viewEventDie die =
     let
         attributes =
-            [ sizeAttribute ] ++ eventDieAttributes die
+            [ sizeAttribute ]
+                ++ eventDieAttributes die
     in
     viewDie GotEventDieMsg attributes die
 
@@ -171,7 +172,7 @@ viewRedDie : Die.Model -> Html Msg
 viewRedDie die =
     let
         attributes =
-            [ sizeAttribute, class "has-text-danger" ]
+            [ sizeAttribute, colorAttribute Red ]
                 ++ productionDieAttributes die
     in
     viewDie GotRedDieMsg attributes die
@@ -181,7 +182,7 @@ viewYellowDie : Die.Model -> Html Msg
 viewYellowDie die =
     let
         attributes =
-            [ sizeAttribute, class "has-text-warning" ]
+            [ sizeAttribute, colorAttribute Yellow ]
                 ++ productionDieAttributes die
     in
     viewDie GotYellowDieMsg attributes die
@@ -199,17 +200,17 @@ eventDieAttributes die =
             class "fab fa-fort-awesome"
 
         barbarian =
-            [ class "fas fa-skull-crossbones", class "has-text-black" ]
+            [ class "fas fa-skull-crossbones", colorAttribute Black ]
     in
     case die.face of
         Die.Face 1 ->
-            [ gate, class "has-text-info" ]
+            [ gate, colorAttribute Blue ]
 
         Die.Face 2 ->
-            [ gate, class "has-text-warning" ]
+            [ gate, colorAttribute Yellow ]
 
         Die.Face 3 ->
-            [ gate, class "has-text-success" ]
+            [ gate, colorAttribute Green ]
 
         Die.Face 4 ->
             barbarian
@@ -250,6 +251,37 @@ productionDieAttributes die =
 
 
 
+-- COLORS
+
+
+type Color
+    = Black
+    | Red
+    | Yellow
+    | Green
+    | Blue
+
+
+colorAttribute : Color -> Html.Attribute msg
+colorAttribute color =
+    case color of
+        Black ->
+            class "has-text-black"
+
+        Red ->
+            class "has-text-danger"
+
+        Yellow ->
+            class "has-text-warning"
+
+        Green ->
+            class "has-text-success"
+
+        Blue ->
+            class "has-text-info"
+
+
+
 -- ROLL BUTTON
 
 
@@ -260,8 +292,10 @@ viewRollButton model =
             Die.isRolling model.eventDie
 
         attributes =
-            class "button is-medium is-primary"
-                :: [ disabled isRolling, onClick UserClickedRollButton ]
+            [ class "button is-medium is-primary"
+            , disabled isRolling
+            , onClick UserClickedRollButton
+            ]
 
         text_ =
             rollButtonText isRolling
