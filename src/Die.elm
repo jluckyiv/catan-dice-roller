@@ -89,8 +89,8 @@ update msg model =
             )
 
 
-view : (Model -> List (Html.Attribute Msg)) -> Model -> Html Msg
-view toAttributes model =
+view : List (Html.Attribute Msg) -> Model -> Html Msg
+view attributes model =
     let
         transitionAttributes =
             case model.state of
@@ -102,4 +102,4 @@ view toAttributes model =
                 NotRolling ->
                     []
     in
-    i (transitionAttributes ++ toAttributes model) []
+    i (transitionAttributes ++ attributes) []

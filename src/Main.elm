@@ -2,8 +2,6 @@ module Main exposing (main)
 
 import Browser
 import Die as Die
-import Die.Event as EventDie
-import Die.Production as ProductionDie
 import Html exposing (..)
 import Html.Attributes exposing (class, disabled, style)
 import Html.Events exposing (..)
@@ -41,7 +39,7 @@ init _ =
       , redDie = Die.init 6
       , yellowDie = Die.init 6
       }
-    , Cmd.none {- rollCmd GotNewFaces -}
+    , Cmd.none
     )
 
 
@@ -116,20 +114,143 @@ subscriptions model =
 
 view : Model -> Html Msg
 view model =
-    div [ class "section" ]
+    mainSection
+        [ childTile (viewEventDie model.eventDie)
+        , childTile (viewRedDie model.redDie)
+        , childTile (viewYellowDie model.yellowDie)
+        , childTile (viewRollButton model)
+        ]
+
+
+mainSection : List (Html Msg) -> Html Msg
+mainSection contents =
+    section [ class "section" ]
         [ div [ class "container" ]
-            [ div [ class "tile is-ancestor is-vertical" ]
-                [ div [ class "tile" ]
-                    [ div [ class "tile is-parent is-vertical" ]
-                        [ div [ class "tile is-child" ] [ Html.map GotEventDieMsg (Die.view EventDie.attributes model.eventDie) ]
-                        , div [ class "tile is-child" ] [ Html.map GotRedDieMsg (Die.view (ProductionDie.attributes ProductionDie.Red) model.redDie) ]
-                        , div [ class "tile is-child" ] [ Html.map GotYellowDieMsg (Die.view (ProductionDie.attributes ProductionDie.Yellow) model.yellowDie) ]
-                        , div [ class "tile is-child" ] [ viewRollButton model ]
-                        ]
-                    ]
-                ]
+            [ ancestorTile contents ]
+        ]
+
+
+ancestorTile : List (Html Msg) -> Html Msg
+ancestorTile contents =
+    div [ class "tile is-ancestor is-vertical" ]
+        [ div [ class "tile" ]
+            [ div [ class "tile is-parent is-vertical" ]
+                contents
             ]
         ]
+
+
+childTile : Html Msg -> Html Msg
+childTile contents =
+    div [ class "tile is-child" ] [ contents ]
+
+
+
+-- DIE VIEW
+
+
+viewDie :
+    (Die.Msg -> Msg)
+    -> List (Html.Attribute Die.Msg)
+    -> Die.Model
+    -> Html Msg
+viewDie toMsg attributes die =
+    Html.map toMsg (Die.view attributes die)
+
+
+viewEventDie : Die.Model -> Html Msg
+viewEventDie die =
+    let
+        attributes =
+            [ sizeAttribute ] ++ eventDieAttributes die
+    in
+    viewDie GotEventDieMsg attributes die
+
+
+viewRedDie : Die.Model -> Html Msg
+viewRedDie die =
+    let
+        attributes =
+            [ sizeAttribute, class "has-text-danger" ]
+                ++ productionDieAttributes die
+    in
+    viewDie GotRedDieMsg attributes die
+
+
+viewYellowDie : Die.Model -> Html Msg
+viewYellowDie die =
+    let
+        attributes =
+            [ sizeAttribute, class "has-text-warning" ]
+                ++ productionDieAttributes die
+    in
+    viewDie GotYellowDieMsg attributes die
+
+
+sizeAttribute : Html.Attribute msg
+sizeAttribute =
+    class "fa-5x"
+
+
+eventDieAttributes : Die.Model -> List (Html.Attribute msg)
+eventDieAttributes die =
+    let
+        gate =
+            class "fab fa-fort-awesome"
+
+        barbarian =
+            [ class "fas fa-skull-crossbones", class "has-text-black" ]
+    in
+    case die.face of
+        Die.Face 1 ->
+            [ gate, class "has-text-info" ]
+
+        Die.Face 2 ->
+            [ gate, class "has-text-warning" ]
+
+        Die.Face 3 ->
+            [ gate, class "has-text-success" ]
+
+        Die.Face 4 ->
+            barbarian
+
+        Die.Face 5 ->
+            barbarian
+
+        Die.Face 6 ->
+            barbarian
+
+        _ ->
+            [ class "" ]
+
+
+productionDieAttributes : Die.Model -> List (Html.Attribute msg)
+productionDieAttributes die =
+    case die.face of
+        Die.Face 1 ->
+            [ class "fas fa-dice-one" ]
+
+        Die.Face 2 ->
+            [ class "fas fa-dice-two" ]
+
+        Die.Face 3 ->
+            [ class "fas fa-dice-three" ]
+
+        Die.Face 4 ->
+            [ class "fas fa-dice-four" ]
+
+        Die.Face 5 ->
+            [ class "fas fa-dice-five" ]
+
+        Die.Face 6 ->
+            [ class "fas fa-dice-six" ]
+
+        _ ->
+            [ class "" ]
+
+
+
+-- ROLL BUTTON
 
 
 viewRollButton : Model -> Html Msg
@@ -137,14 +258,15 @@ viewRollButton model =
     let
         isRolling =
             Die.isRolling model.eventDie
+
+        attributes =
+            class "button is-medium is-primary"
+                :: [ disabled isRolling, onClick UserClickedRollButton ]
+
+        text_ =
+            rollButtonText isRolling
     in
-    button (rollButtonAttributes isRolling ++ [ class "button is-medium is-primary" ])
-        [ text (rollButtonText isRolling) ]
-
-
-rollButtonAttributes : Bool -> List (Html.Attribute Msg)
-rollButtonAttributes isRolling =
-    [ disabled isRolling, onClick UserClickedRollButton ]
+    button attributes [ text text_ ]
 
 
 rollButtonText : Bool -> String
