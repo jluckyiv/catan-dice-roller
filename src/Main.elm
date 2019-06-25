@@ -114,24 +114,24 @@ subscriptions model =
 
 view : Model -> Html Msg
 view model =
-    mainSection
-        [ childTile (viewEventDie model.eventDie)
-        , childTile (viewRedDie model.redDie)
-        , childTile (viewYellowDie model.yellowDie)
-        , childTile (viewRollButton model)
+    viewMain
+        [ viewTile (viewEventDie model.eventDie)
+        , viewTile (viewRedDie model.redDie)
+        , viewTile (viewYellowDie model.yellowDie)
+        , viewTile (viewRollButton model)
         ]
 
 
-mainSection : List (Html Msg) -> Html Msg
-mainSection contents =
+viewMain : List (Html Msg) -> Html Msg
+viewMain contents =
     section [ class "section" ]
         [ div [ class "container" ]
-            [ ancestorTile contents ]
+            [ viewContainer contents ]
         ]
 
 
-ancestorTile : List (Html Msg) -> Html Msg
-ancestorTile contents =
+viewContainer : List (Html Msg) -> Html Msg
+viewContainer contents =
     div [ class "tile is-ancestor is-vertical" ]
         [ div [ class "tile" ]
             [ div [ class "tile is-parent is-vertical" ]
@@ -140,57 +140,48 @@ ancestorTile contents =
         ]
 
 
-childTile : Html Msg -> Html Msg
-childTile contents =
+viewTile : Html Msg -> Html Msg
+viewTile contents =
     div [ class "tile is-child" ] [ contents ]
 
 
 
--- DIE VIEW
-
-
-viewDie :
-    (Die.Msg -> Msg)
-    -> List (Html.Attribute Die.Msg)
-    -> Die.Model
-    -> Html Msg
-viewDie toMsg attributes die =
-    Html.map toMsg (Die.view attributes die)
+-- DIE VIEWS
 
 
 viewEventDie : Die.Model -> Html Msg
 viewEventDie die =
-    let
-        attributes =
-            [ sizeAttribute ]
-                ++ eventDieAttributes die
-    in
-    viewDie GotEventDieMsg attributes die
+    eventDieAttributes die
+        |> viewDie GotEventDieMsg die
 
 
 viewRedDie : Die.Model -> Html Msg
 viewRedDie die =
-    let
-        attributes =
-            [ sizeAttribute, colorAttribute Red ]
-                ++ productionDieAttributes die
-    in
-    viewDie GotRedDieMsg attributes die
+    productionDieAttributes die
+        ++ colorAttributes Red
+        |> viewDie GotRedDieMsg die
 
 
 viewYellowDie : Die.Model -> Html Msg
 viewYellowDie die =
-    let
-        attributes =
-            [ sizeAttribute, colorAttribute Yellow ]
-                ++ productionDieAttributes die
-    in
-    viewDie GotYellowDieMsg attributes die
+    productionDieAttributes die
+        ++ colorAttributes Yellow
+        |> viewDie GotYellowDieMsg die
 
 
-sizeAttribute : Html.Attribute msg
-sizeAttribute =
-    class "fa-5x"
+viewDie :
+    (Die.Msg -> Msg)
+    -> Die.Model
+    -> List (Html.Attribute Die.Msg)
+    -> Html Msg
+viewDie toMsg die attributes =
+    Html.map toMsg
+        (Die.view (attributes ++ sizeAttributes) die)
+
+
+sizeAttributes : List (Html.Attribute msg)
+sizeAttributes =
+    [ class "fa-5x" ]
 
 
 eventDieAttributes : Die.Model -> List (Html.Attribute msg)
@@ -200,26 +191,26 @@ eventDieAttributes die =
             class "fab fa-fort-awesome"
 
         barbarian =
-            [ class "fas fa-skull-crossbones", colorAttribute Black ]
+            class "fas fa-skull-crossbones"
     in
     case die.face of
         Die.Face 1 ->
-            [ gate, colorAttribute Blue ]
+            gate :: colorAttributes Blue
 
         Die.Face 2 ->
-            [ gate, colorAttribute Yellow ]
+            gate :: colorAttributes Yellow
 
         Die.Face 3 ->
-            [ gate, colorAttribute Green ]
+            gate :: colorAttributes Green
 
         Die.Face 4 ->
-            barbarian
+            barbarian :: colorAttributes Black
 
         Die.Face 5 ->
-            barbarian
+            barbarian :: colorAttributes Black
 
         Die.Face 6 ->
-            barbarian
+            barbarian :: colorAttributes Black
 
         _ ->
             [ class "" ]
@@ -254,31 +245,31 @@ productionDieAttributes die =
 -- COLORS
 
 
+colorAttributes : Color -> List (Html.Attribute msg)
+colorAttributes color =
+    case color of
+        Black ->
+            [ class "has-text-black" ]
+
+        Red ->
+            [ class "has-text-danger" ]
+
+        Yellow ->
+            [ class "has-text-warning" ]
+
+        Green ->
+            [ class "has-text-success" ]
+
+        Blue ->
+            [ class "has-text-info" ]
+
+
 type Color
     = Black
     | Red
     | Yellow
     | Green
     | Blue
-
-
-colorAttribute : Color -> Html.Attribute msg
-colorAttribute color =
-    case color of
-        Black ->
-            class "has-text-black"
-
-        Red ->
-            class "has-text-danger"
-
-        Yellow ->
-            class "has-text-warning"
-
-        Green ->
-            class "has-text-success"
-
-        Blue ->
-            class "has-text-info"
 
 
 
@@ -293,8 +284,8 @@ viewRollButton model =
 
         attributes =
             [ class "button is-medium is-primary"
-            , disabled isRolling
             , onClick UserClickedRollButton
+            , disabled isRolling
             ]
 
         text_ =
